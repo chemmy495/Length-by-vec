@@ -1,0 +1,6 @@
+{
+  "dim": 300,
+  "count": 50000,
+  "source": "fastText cc.ja.300 (Common Crawl + Wikipedia, CBOW)",
+  "quantization": "per-vector int8, unit-normalized"
+}

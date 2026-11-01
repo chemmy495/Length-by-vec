@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ことばの距離</title>
+  <meta name="description" content="Word2Vec系の日本語単語ベクトルで、言葉と言葉の意味の距離を測るサイト">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <h1>ことばの距離</h1>
+    <p class="lead">単語ベクトル（Word2Vec 系モデル）で、言葉と言葉の「意味の近さ」を測ります。</p>
+  </header>
+
+  <div id="loading" class="loading" role="status">
+    <p>モデルを読み込んでいます… <span id="loading-pct">0%</span></p>
+    <div class="progress"><div id="loading-bar"></div></div>
+    <p class="hint">初回のみ約15MBをダウンロードします。</p>
+  </div>
+
+  <main id="app" hidden>
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-tab="pair" aria-selected="true">2語の距離</button>
+      <button role="tab" data-tab="multi" aria-selected="false">まとめて比較</button>
+      <button role="tab" data-tab="near" aria-selected="false">近い言葉</button>
+      <button role="tab" data-tab="calc" aria-selected="false">言葉の足し算</button>
+    </nav>
+
+    <!-- 2語の距離 -->
+    <section id="tab-pair" class="panel">
+      <form id="pair-form" class="row">
+        <input id="pair-a" placeholder="例：犬" autocomplete="off" required>
+        <span class="vs">↔</span>
+        <input id="pair-b" placeholder="例：猫" autocomplete="off" required>
+        <button type="submit">測る</button>
+      </form>
+      <div class="examples" data-target="pair">
+        例：
+        <button type="button" data-a="犬" data-b="猫">犬 ↔ 猫</button>
+        <button type="button" data-a="犬" data-b="自動車">犬 ↔ 自動車</button>
+        <button type="button" data-a="東京" data-b="大阪">東京 ↔ 大阪</button>
+        <button type="button" data-a="愛" data-b="憎しみ">愛 ↔ 憎しみ</button>
+        <button type="button" data-a="コーヒー" data-b="紅茶">コーヒー ↔ 紅茶</button>
+      </div>
+      <div id="pair-result" class="result"></div>
+    </section>
+
+    <!-- まとめて比較 -->
+    <section id="tab-multi" class="panel" hidden>
+      <form id="multi-form">
+        <label>基準の言葉 <input id="multi-base" placeholder="例：夏" autocomplete="off" required></label>
+        <label>比べる言葉（スペース・改行・読点区切り）
+          <textarea id="multi-list" rows="3" placeholder="例：海 冬 スイカ 雪 花火 勉強"></textarea>
+        </label>
+        <button type="submit">比較する</button>
+      </form>
+      <div id="multi-result" class="result"></div>
+    </section>
+
+    <!-- 近い言葉 -->
+    <section id="tab-near" class="panel" hidden>
+      <form id="near-form" class="row">
+        <input id="near-word" placeholder="例：ラーメン" autocomplete="off" required>
+        <button type="submit">探す</button>
+      </form>
+      <div id="near-result" class="result"></div>
+    </section>
+
+    <!-- 言葉の足し算 -->
+    <section id="tab-calc" class="panel" hidden>
+      <form id="calc-form" class="row">
+        <input id="calc-a" placeholder="王" autocomplete="off" required>
+        <span class="op">−</span>
+        <input id="calc-b" placeholder="男" autocomplete="off" required>
+        <span class="op">＋</span>
+        <input id="calc-c" placeholder="女" autocomplete="off" required>
+        <button type="submit">計算</button>
+      </form>
+      <div class="examples" data-target="calc">
+        例：
+        <button type="button" data-a="王" data-b="男" data-c="女">王 − 男 ＋ 女</button>
+        <button type="button" data-a="東京" data-b="日本" data-c="フランス">東京 − 日本 ＋ フランス</button>
+        <button type="button" data-a="昼" data-b="太陽" data-c="月">昼 − 太陽 ＋ 月</button>
+      </div>
+      <div id="calc-result" class="result"></div>
+    </section>
+
+    <details class="about">
+      <summary>このサイトについて・距離の読み方</summary>
+      <ul>
+        <li><b>コサイン類似度</b>：2つの単語ベクトルの向きの近さ（−1〜1）。1に近いほど意味・使われ方が似ています。</li>
+        <li><b>距離</b>：<code>1 − コサイン類似度</code>（0〜2）。小さいほど近い言葉です。</li>
+        <li><b>角度</b>：ベクトル同士のなす角（0°〜180°）。</li>
+        <li>モデル：<a href="https://fasttext.cc/docs/en/crawl-vectors.html" target="_blank" rel="noopener">fastText 日本語ベクトル (cc.ja.300)</a>。Word2Vec の CBOW を拡張した手法で学習されたもので、頻出上位 <span id="vocab-count"></span> 語・300次元を int8 に圧縮して使っています（ライセンス：CC BY-SA 3.0）。</li>
+        <li>計算はすべてブラウザ内で行われ、入力した言葉はどこにも送信されません。</li>
+        <li>単語は形態素単位です。「走った」より「走る」、「美しかった」より「美しい」のように辞書形で入れると見つかりやすくなります。</li>
+      </ul>
+    </details>
+  </main>
+
+  <footer class="site-footer">
+    <a href="https://github.com/chemmy495/length-by-vec" target="_blank" rel="noopener">GitHub</a>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
